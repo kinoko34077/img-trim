@@ -1,0 +1,11 @@
+# Python cache and bytecode
+__pycache__/
+*.py[cod]
+
+# Per-user application settings (contain local paths and screen coordinates)
+trim_settings.ini
+seq_capture.ini
+
+# Build artifacts
+build/
+dist/

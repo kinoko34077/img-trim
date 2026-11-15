@@ -18,23 +18,33 @@ Windows 向けの画像トリミング・画面キャプチャツールです。
 
 ## セットアップ
 
+```powershell
 py -m pip install -r requirements.txt
+```
 
 ## 起動
 
-画像の一括トリミング: py img-trim.py
+画像の一括トリミング:
 
-連番キャプチャ: py seq_capture.py
+```powershell
+py img-trim.py
+```
 
-同梱の start_img-trim.bat と start_seq_capture.py.bat からも起動できます。
+連番キャプチャ:
+
+```powershell
+py seq_capture.py
+```
+
+同梱の `start_img-trim.bat` と `start_seq_capture.py.bat` からも起動できます。
 
 ## 設定と保存先
 
-各アプリの設定は初回起動後、このフォルダーに trim_settings.ini と seq_capture.ini として保存されます。設定ファイルには入力・出力フォルダーや画面座標が含まれるため、Git 管理対象外です。出力先は画面で選択してください。
+各アプリの設定は初回起動後、このフォルダーに `trim_settings.ini` と `seq_capture.ini` として保存されます。設定ファイルには入力・出力フォルダーや画面座標が含まれるため、Git 管理対象外です。出力先は画面で選択してください。
 
 ## 構成
 
-- img-trim.py: 一括トリミング画面
-- seq_capture.py: 連番キャプチャ画面
-- imgtrim_gui.py: キャプチャ画面からトリミング画面を開く連携部
-- imgtrim_core/: トリミング、画面キャプチャ、ページ操作、Windows DPI 対応の内部処理
+- `img-trim.py`: 一括トリミング画面
+- `seq_capture.py`: 連番キャプチャ画面
+- `imgtrim_gui.py`: キャプチャ画面からトリミング画面を開く連携部
+- `imgtrim_core/`: トリミング、画面キャプチャ、ページ操作、Windows DPI 対応の内部処理
