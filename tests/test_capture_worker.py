@@ -70,6 +70,7 @@ class CaptureWorkerTests(unittest.TestCase):
         }
         app.resolve_region_values = lambda *args, **kwargs: (20, 30, 40, 50)
         app.update_after_capture = object()
+        app.set_current_page = object()
         app.finish_capture = object()
         app.finish_with_error = lambda _message: None
         app.root = SimpleNamespace(
@@ -116,6 +117,39 @@ class CaptureWorkerTests(unittest.TestCase):
             [
                 (0, app.update_after_capture, (3, 3)),
                 (0, app.finish_capture, ()),
+            ],
+        )
+
+    def test_run_advances_pages_and_saves_each_sequence_frame(self):
+        app, scheduled = self.make_app(page=1, end_page=2)
+
+        with (
+            patch("imgtrim_ui.capture_worker.mss.MSS", return_value=FakeMSS()),
+            patch(
+                "imgtrim_ui.capture_worker.build_sequence_output_path",
+                side_effect=[Path("output/page_0001.png"), Path("output/page_0002.png")],
+            ),
+            patch(
+                "imgtrim_ui.capture_worker.save_resolved_region_png"
+            ) as save_png,
+            patch("imgtrim_ui.capture_worker.send_page_key") as send_key,
+        ):
+            SequenceCaptureWorker(app).run()
+
+        self.assertEqual(save_png.call_count, 2)
+        self.assertEqual(
+            [call.args[1] for call in save_png.call_args_list],
+            [(20, 30, 40, 50), (20, 30, 40, 50)],
+        )
+        send_key.assert_called_once_with("Right")
+        self.assertEqual(app.capture_config["current_page"], 2)
+        self.assertEqual(
+            [callback for _delay, callback, _args in scheduled],
+            [
+                app.update_after_capture,
+                app.set_current_page,
+                app.update_after_capture,
+                app.finish_capture,
             ],
         )
 
