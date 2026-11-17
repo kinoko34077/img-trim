@@ -44,7 +44,13 @@ py seq_capture.py
 
 ## 構成
 
-- `img-trim.py`: 一括トリミング画面
-- `seq_capture.py`: 連番キャプチャ画面
-- `imgtrim_gui.py`: キャプチャ画面からトリミング画面を開く連携部
+- `img-trim.py` / `imgtrim_gui.py`: 一括トリミング画面の起動口と画面連携
+- `seq_capture.py`: 連番キャプチャの互換起動口
+- `imgtrim_ui/trim_app.py`: 一括トリミング画面の状態・操作調整
+- `imgtrim_ui/trim_view.py`: 一括トリミング画面の部品配置
+- `imgtrim_ui/sequence_app.py`: 連番キャプチャ画面の状態・操作調整
+- `imgtrim_ui/sequence_view.py`: 連番キャプチャ画面の部品配置
+- `imgtrim_ui/capture_worker.py`: バックグラウンド連番撮影と割り込み可能な待機
+- `imgtrim_ui/region_selectors.py`: キャプチャ範囲の選択・編集オーバーレイ
 - `imgtrim_core/`: トリミング、画面キャプチャ、ページ操作、Windows DPI 対応の内部処理
+- `imgtrim_core/app_paths.py`: 設定ファイルを置くアプリケーションフォルダーの解決
