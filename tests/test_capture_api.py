@@ -1,6 +1,7 @@
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 
 from PIL import Image
 
@@ -28,6 +29,29 @@ class FakeMSS:
 
 
 class SaveResolvedRegionTests(unittest.TestCase):
+    def test_size_mode_keeps_selected_width_and_height(self):
+        app = object.__new__(CaptureApp)
+        app.region_input_mode = SimpleNamespace(get=lambda: "size")
+        app.relative_to_window = SimpleNamespace(get=lambda: False)
+        app.get_target_rect = lambda _hwnd=None: (100, 200, 800, 600)
+
+        values = CaptureApp.selected_screen_region_to_values(
+            app,
+            110,
+            220,
+            317,
+            451,
+        )
+        self.assertEqual(values, (110, 220, 317, 451))
+
+        resolved = CaptureApp.resolve_region_values(
+            app,
+            *values,
+            input_mode="size",
+            relative_to_window=False,
+        )
+        self.assertEqual(resolved, (110, 220, 317, 451))
+
     def test_png_uses_resolved_region_dimensions(self):
         # Center-absolute input combines opposing margins into the final size.
         app = object.__new__(CaptureApp)
