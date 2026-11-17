@@ -6,6 +6,7 @@ from unittest.mock import patch
 
 from imgtrim_ui.capture_worker import SequenceCaptureWorker
 from imgtrim_ui.trim_app import TrimApp
+import imgtrim_ui.sequence_app as sequence_app
 from imgtrim_gui import get_trim_app_class
 from seq_capture import CaptureApp
 
@@ -22,6 +23,28 @@ class CaptureWorkerTests(unittest.TestCase):
     def test_legacy_launchers_share_the_package_implementations(self):
         self.assertIs(get_trim_app_class(), TrimApp)
         self.assertEqual(CaptureApp.__module__, "imgtrim_ui.sequence_app")
+
+    def test_capture_app_keeps_trim_and_output_dialog_integrations(self):
+        app = object.__new__(CaptureApp)
+        app.root = object()
+        app.output_dir = SimpleNamespace(get=lambda: "out")
+
+        with patch("imgtrim_ui.sequence_app.open_trim_window") as open_trim:
+            app.open_trim_tool()
+
+        open_trim.assert_called_once_with(
+            app.root, input_dir="out", output_dir=str(Path("out") / "trimmed")
+        )
+
+        with patch(
+            "imgtrim_ui.sequence_app.filedialog.askdirectory",
+            return_value="",
+        ) as ask_directory:
+            app.choose_output()
+
+        ask_directory.assert_called_once_with(
+            title="保存先を選択", initialdir=str(sequence_app.APP_DIR)
+        )
 
     def make_app(self, *, page=3, end_page=3):
         scheduled = []

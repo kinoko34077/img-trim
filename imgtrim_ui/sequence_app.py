@@ -1,5 +1,6 @@
+from pathlib import Path
 import tkinter as tk
-from tkinter import filedialog, messagebox
+from tkinter import ttk, filedialog, messagebox
 import configparser
 import ctypes
 from ctypes import wintypes
@@ -25,6 +26,7 @@ from imgtrim_core.app_paths import application_dir
 from imgtrim_ui.region_selectors import LiveRegionSelector
 from imgtrim_ui.capture_worker import SequenceCaptureWorker
 from imgtrim_ui.sequence_view import build_capture_ui
+from imgtrim_gui import open_trim_window
 
 
 APP_DIR = application_dir()
