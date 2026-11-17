@@ -2,22 +2,14 @@ from pathlib import Path
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 import configparser
-import ctypes
-from ctypes import wintypes
-import os
 import threading
 import time
 
 import mss
 from pynput import keyboard
 
-from imgtrim_core.app_runtime import (
-    SW_RESTORE,
-    enable_dpi_awareness,
-    user32,
-)
+from imgtrim_core.app_runtime import enable_dpi_awareness
 from imgtrim_core.capture_api import (
-    get_window_rect,
     resolve_region_absolute as resolve_capture_region_absolute,
 )
 from imgtrim_core.page_control import SPECIAL_KEYS as PAGE_SPECIAL_KEYS
@@ -25,6 +17,7 @@ from imgtrim_core.page_control import SPECIAL_KEYS as PAGE_SPECIAL_KEYS
 from imgtrim_core.app_paths import application_dir
 from imgtrim_ui.region_selectors import LiveRegionSelector
 from imgtrim_ui.capture_worker import SequenceCaptureWorker
+from imgtrim_ui.target_window import TargetWindowManager
 from imgtrim_ui.sequence_view import build_capture_ui
 from imgtrim_gui import open_trim_window
 
@@ -221,6 +214,7 @@ class CaptureApp:
                 "対象ウィンドウ：未検出"
             )
         )
+        self.target_window = TargetWindowManager(self)
 
         self.region_summary = (
             tk.StringVar(
@@ -365,16 +359,8 @@ class CaptureApp:
         }
 
 
-    def get_target_rect(
-        self,
-        hwnd=None
-    ):
-        if hwnd is None:
-            hwnd = self.target_hwnd
-
-        return get_window_rect(
-            hwnd
-        )
+    def get_target_rect(self, hwnd=None):
+        return self.target_window.get_target_rect(hwnd)
 
 
     def resolve_region_absolute(
@@ -917,273 +903,19 @@ class CaptureApp:
     # ========================================================
 
     def capture_foreground_target(self):
-
-        if not self.running:
-
-            hwnd = (
-                user32.GetForegroundWindow()
-            )
-
-            if hwnd:
-
-                pid = (
-                    wintypes.DWORD()
-                )
-
-                user32.GetWindowThreadProcessId(
-                    hwnd,
-                    ctypes.byref(pid)
-                )
-
-                # 自分自身のGUIは対象にしない
-                if (
-                    pid.value
-                    != os.getpid()
-                ):
-
-                    self.target_hwnd = hwnd
-
-                    length = (
-                        user32
-                        .GetWindowTextLengthW(
-                            hwnd
-                        )
-                    )
-
-                    buffer = (
-                        ctypes
-                        .create_unicode_buffer(
-                            length + 1
-                        )
-                    )
-
-                    user32.GetWindowTextW(
-                        hwnd,
-                        buffer,
-                        length + 1
-                    )
-
-                    title = (
-                        buffer.value
-                        or "(無題)"
-                    )
-
-                    if len(title) > 55:
-                        title = (
-                            title[:55]
-                            + "…"
-                        )
-
-                    self.target_name.set(
-                        "対象ウィンドウ："
-                        + title
-                    )
-
-        return (
-            self.get_target_rect()
-            is not None
-        )
+        return self.target_window.capture_foreground_target()
 
 
-    def acquire_target_window(
-        self,
-        refresh=False
-    ):
-        if (
-            not refresh
-            and self.get_target_rect()
-            is not None
-        ):
-            return True
-
-        try:
-            previous_state = self.root.state()
-        except Exception:
-            previous_state = "normal"
-
-        try:
-            self.root.withdraw()
-            self.root.update()
-
-            time.sleep(
-                0.18
-            )
-
-            self.capture_foreground_target()
-
-        finally:
-            try:
-                self.root.deiconify()
-
-                if previous_state == "zoomed":
-                    self.root.state(
-                        "zoomed"
-                    )
-
-                self.root.lift()
-                self.root.update_idletasks()
-            except Exception:
-                pass
-
-        return (
-            self.get_target_rect()
-            is not None
-        )
+    def acquire_target_window(self, refresh=False):
+        return self.target_window.acquire_target_window(refresh)
 
 
-    def activate_target(
-        self,
-        hwnd=None
-    ):
-
-        if hwnd is None:
-            hwnd = self.target_hwnd
-
-        if (
-            not hwnd
-            or not user32.IsWindow(
-                hwnd
-            )
-        ):
-            return False
-
-        try:
-            user32.ShowWindow(
-                hwnd,
-                SW_RESTORE
-            )
-
-            foreground = user32.GetForegroundWindow()
-            current_thread = (
-                ctypes.windll.kernel32.GetCurrentThreadId()
-            )
-            target_thread = (
-                user32.GetWindowThreadProcessId(
-                    hwnd,
-                    None
-                )
-            )
-            foreground_thread = 0
-
-            if foreground:
-                foreground_thread = (
-                    user32.GetWindowThreadProcessId(
-                        foreground,
-                        None
-                    )
-                )
-
-            attached_target = False
-            attached_foreground = False
-
-            try:
-                if target_thread:
-                    attached_target = bool(
-                        user32.AttachThreadInput(
-                            current_thread,
-                            target_thread,
-                            True
-                        )
-                    )
-
-                if (
-                    foreground_thread
-                    and foreground_thread != target_thread
-                ):
-                    attached_foreground = bool(
-                        user32.AttachThreadInput(
-                            current_thread,
-                            foreground_thread,
-                            True
-                        )
-                    )
-
-                user32.BringWindowToTop(
-                    hwnd
-                )
-                user32.SetForegroundWindow(
-                    hwnd
-                )
-                try:
-                    user32.SwitchToThisWindow(
-                        hwnd,
-                        True
-                    )
-                except Exception:
-                    pass
-
-                user32.SetFocus(
-                    hwnd
-                )
-                user32.SetActiveWindow(
-                    hwnd
-                )
-
-            finally:
-                if attached_foreground:
-                    user32.AttachThreadInput(
-                        current_thread,
-                        foreground_thread,
-                        False
-                    )
-
-                if attached_target:
-                    user32.AttachThreadInput(
-                        current_thread,
-                        target_thread,
-                        False
-                    )
-
-            for _index in range(10):
-                foreground = user32.GetForegroundWindow()
-
-                if (
-                    foreground == hwnd
-                    or bool(
-                        user32.IsChild(
-                            hwnd,
-                            foreground
-                        )
-                    )
-                ):
-                    return True
-
-                time.sleep(
-                    0.03
-                )
-
-            return False
-
-        except Exception:
-            return False
+    def activate_target(self, hwnd=None):
+        return self.target_window.activate_target(hwnd)
 
 
-    def is_target_active(
-        self,
-        hwnd=None
-    ):
-        if hwnd is None:
-            hwnd = self.target_hwnd
-
-        if (
-            not hwnd
-            or not user32.IsWindow(
-                hwnd
-            )
-        ):
-            return False
-
-        foreground = user32.GetForegroundWindow()
-
-        return (
-            foreground == hwnd
-            or bool(
-                user32.IsChild(
-                    hwnd,
-                    foreground
-                )
-            )
-        )
+    def is_target_active(self, hwnd=None):
+        return self.target_window.is_target_active(hwnd)
 
 
     # ========================================================

@@ -6,6 +6,7 @@ from unittest.mock import patch
 
 from imgtrim_ui.capture_worker import SequenceCaptureWorker
 from imgtrim_ui.trim_app import TrimApp
+from imgtrim_ui.target_window import TargetWindowManager
 import imgtrim_ui.sequence_app as sequence_app
 from imgtrim_gui import get_trim_app_class
 from seq_capture import CaptureApp
@@ -44,6 +45,22 @@ class CaptureWorkerTests(unittest.TestCase):
 
         ask_directory.assert_called_once_with(
             title="保存先を選択", initialdir=str(sequence_app.APP_DIR)
+        )
+
+    def test_target_window_manager_uses_app_owned_handle(self):
+        app = SimpleNamespace(target_hwnd=123)
+        manager = TargetWindowManager(app)
+
+        with patch(
+            "imgtrim_ui.target_window.get_window_rect",
+            return_value=(10, 20, 300, 200),
+        ) as get_rect:
+            self.assertEqual(manager.get_target_rect(), (10, 20, 300, 200))
+            manager.get_target_rect(456)
+
+        self.assertEqual(
+            [entry.args[0] for entry in get_rect.call_args_list],
+            [123, 456],
         )
 
     def make_app(self, *, page=3, end_page=3):

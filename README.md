@@ -52,5 +52,6 @@ py seq_capture.py
 - `imgtrim_ui/sequence_view.py`: 連番キャプチャ画面の部品配置
 - `imgtrim_ui/capture_worker.py`: バックグラウンド連番撮影と割り込み可能な待機
 - `imgtrim_ui/region_selectors.py`: キャプチャ範囲の選択・編集オーバーレイ
+- `imgtrim_ui/target_window.py`: 対象ウィンドウの検出・前面化・座標取得
 - `imgtrim_core/`: トリミング、画面キャプチャ、ページ操作、Windows DPI 対応の内部処理
 - `imgtrim_core/app_paths.py`: 設定ファイルを置くアプリケーションフォルダーの解決
