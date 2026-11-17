@@ -26,7 +26,7 @@ from imgtrim_core.capture_api import (
     get_window_rect,
     image_from_mss_shot,
     resolve_region_absolute as resolve_capture_region_absolute,
-    save_region_png,
+    save_resolved_region_png,
 )
 from imgtrim_core.page_control import (
     SPECIAL_KEYS as PAGE_SPECIAL_KEYS,
@@ -2397,7 +2397,8 @@ class CaptureApp:
             textvariable=self.region_input_mode,
             values=(
                 "corners",
-                "center_abs"
+                "center_abs",
+                "size"
             ),
             state="readonly",
             width=14
@@ -2962,6 +2963,13 @@ class CaptureApp:
                 "右",
                 "下"
             )
+        elif mode == "size":
+            labels = (
+                "X",
+                "Y",
+                "幅",
+                "高さ"
+            )
         else:
             labels = (
                 "X1",
@@ -3140,6 +3148,22 @@ class CaptureApp:
     ):
         mode = self.region_input_mode.get()
 
+        if mode == "size":
+            if self.relative_to_window.get():
+                base_rect = self.get_target_rect()
+
+                if base_rect is not None:
+                    base_left, base_top, _bw, _bh = base_rect
+                    left -= base_left
+                    top -= base_top
+
+            return (
+                left,
+                top,
+                width,
+                height,
+            )
+
         if mode == "center_abs":
             if self.relative_to_window.get():
                 base_rect = self.get_target_rect()
@@ -3220,7 +3244,7 @@ class CaptureApp:
             )
         elif mode == "size":
             input_text = (
-                f"legacy X={a} Y={b} W={c} H={d}"
+                f"size X={a} Y={b} W={c} H={d}"
             )
         else:
             input_text = (
@@ -4752,8 +4776,6 @@ class CaptureApp:
                         )
                         return
 
-                    abs_x, abs_y, _abs_w, _abs_h = absolute_region
-
                     output_path = build_sequence_output_path(
                         output,
                         prefix=prefix,
@@ -4773,12 +4795,9 @@ class CaptureApp:
                     # 低圧縮PNG
                     # =========================================
 
-                    save_region_png(
+                    save_resolved_region_png(
                         output_path,
-                        abs_x,
-                        abs_y,
-                        width,
-                        height,
+                        absolute_region,
                         sct=sct,
                         compress_level=1
                     )
