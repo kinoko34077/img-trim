@@ -95,6 +95,13 @@ def grab_region_image(
         monitor
     )
 
+    if shot.size != (width, height):
+        raise RuntimeError(
+            "screen capture returned "
+            f"{shot.size[0]}x{shot.size[1]}; "
+            f"requested {width}x{height}"
+        )
+
     return image_from_mss_shot(
         shot
     )
@@ -139,6 +146,28 @@ def save_region_png(
     finally:
         if owns_sct:
             sct.close()
+
+
+def save_resolved_region_png(
+    output_path,
+    region,
+    *,
+    sct=None,
+    compress_level=1
+):
+    """Save the exact rectangle returned by the region resolver."""
+
+    x, y, width, height = region
+
+    return save_region_png(
+        output_path,
+        x,
+        y,
+        width,
+        height,
+        sct=sct,
+        compress_level=compress_level
+    )
 
 
 def resolve_output_path(
