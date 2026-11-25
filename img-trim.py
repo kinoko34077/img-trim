@@ -576,8 +576,8 @@ class TrimApp:
 
         if self.running:
             if not messagebox.askyesno(
-                "???",
-                "?????????????????"
+                "確認",
+                "処理中です。中断して終了しますか？"
             ):
                 return
 
@@ -589,7 +589,7 @@ class TrimApp:
 
 
     # ========================================================
-    # ??????
+    # 画像取得
     # ========================================================
 
     def get_image_files(
@@ -605,7 +605,7 @@ class TrimApp:
 
 
     # ========================================================
-    # ???????: ??????
+    # ワーカー: トリミング
     # ========================================================
 
     def trim_worker(
@@ -730,25 +730,25 @@ class TrimApp:
 
             if len(errors) > 10:
                 error_text += (
-                    f"\n\n??? {len(errors) - 10} ?"
+                    f"\n\n（ほか {len(errors) - 10} 件）"
                 )
 
             messagebox.showwarning(
-                "?????????",
-                f"??: {success}\n"
-                f"??: {len(errors)}\n\n"
+                "トリミング完了（エラーあり）",
+                f"成功: {success}\n"
+                f"失敗: {len(errors)}\n\n"
                 f"{error_text}"
             )
 
         else:
             messagebox.showinfo(
-                "??",
-                f"{success} ?????????"
+                "完了",
+                f"{success} 件のトリミングが完了しました。"
             )
 
 
     # ========================================================
-    # ??
+    # 実行
     # ========================================================
 
     def run_trim(self):
@@ -783,8 +783,8 @@ class TrimApp:
 
         except ValueError:
             messagebox.showerror(
-                "?????",
-                "???????????????????"
+                "入力エラー",
+                "トリミング量には整数を入力してください。"
             )
             return
 
@@ -797,15 +797,15 @@ class TrimApp:
 
         if not input_dir.is_dir():
             messagebox.showerror(
-                "?????",
-                "??????????????"
+                "入力エラー",
+                "入力フォルダが存在しません。"
             )
             return
 
         if not self.output_dir.get().strip():
             messagebox.showerror(
-                "?????",
-                "????????????????"
+                "入力エラー",
+                "出力フォルダを指定してください。"
             )
             return
 
@@ -819,8 +819,8 @@ class TrimApp:
             )
         ):
             messagebox.showerror(
-                "?????",
-                "???????????????????"
+                "入力エラー",
+                "トリミング量に負の値は指定できません。"
             )
             return
 
@@ -838,8 +838,8 @@ class TrimApp:
 
         if not files:
             messagebox.showinfo(
-                "??",
-                "???????????"
+                "情報",
+                "対象の画像がありません。"
             )
             return
 
