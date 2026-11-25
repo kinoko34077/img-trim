@@ -176,9 +176,40 @@ def trim_image(
     )
 
 
+def collect_preserved_metadata(
+    image
+):
+    """トリミングで失いたくない埋め込み情報を元画像から取り出す。
+
+    EXIF（向きを含む）・ICC プロファイル・DPI を対象にする。Image.save は
+    これらを自動では引き継がないため、保存時に明示して渡す。
+    """
+    info = getattr(
+        image,
+        "info",
+        {}
+    )
+    metadata = {}
+
+    for key in (
+        "exif",
+        "icc_profile",
+        "dpi"
+    ):
+        value = info.get(
+            key
+        )
+
+        if value:
+            metadata[key] = value
+
+    return metadata
+
+
 def save_trimmed_image(
     image,
-    output_path
+    output_path,
+    metadata=None
 ):
     output_path = Path(
         output_path
@@ -199,7 +230,8 @@ def save_trimmed_image(
         )
 
     image.save(
-        output_path
+        output_path,
+        **(metadata or {})
     )
 
     return output_path
@@ -211,6 +243,9 @@ def trim_image_to_path(
     margins
 ):
     with Image.open(input_path) as img:
+        metadata = collect_preserved_metadata(
+            img
+        )
         cropped = trim_image(
             img,
             margins
@@ -218,7 +253,8 @@ def trim_image_to_path(
 
         return save_trimmed_image(
             cropped,
-            output_path
+            output_path,
+            metadata
         )
 
 
